@@ -51,6 +51,9 @@ public:
   using ActionType = ActionT;
   using GoalType = typename ActionT::_action_goal_type::_goal_type;
   using ResultType = typename ActionT::_action_result_type::_result_type;
+  using ResultTypeConstPtr = typename ActionT::_action_result_type::_result_type::ConstPtr;
+  using FeedbackType = typename ActionT::_action_feedback_type::_feedback_type;
+  using FeedbackTypeConstPtr = typename ActionT::_action_feedback_type::_feedback_type::ConstPtr;
 
   RosActionNode() = delete;
 
@@ -68,6 +71,16 @@ public:
   /// If it return false, the entire action is immediately aborted, it returns
   /// FAILURE and no request is sent to the server.
   virtual bool sendGoal(GoalType& goal) = 0;
+
+  virtual void onDone(const ResultType& res)
+  {
+  }
+  virtual void onActive()
+  {
+  }
+  virtual void onFeedback(const FeedbackType& res)
+  {
+  }
 
   virtual bool onFirstStart() = 0;
 
@@ -137,7 +150,9 @@ protected:
       {
         return NodeStatus::FAILURE;
       }
-      action_client_->sendGoal(goal);
+      action_client_->sendGoal(goal, boost::bind(&BaseClass::doneCallBack, this, _1, _2),
+                               boost::bind(&BaseClass::activeCallBack, this),
+                               boost::bind(&BaseClass::feedbackCallBack, this, _1));
     }
 
     // RUNNING
@@ -167,6 +182,18 @@ protected:
       // FIXME: is there any other valid state we should consider?
       throw std::logic_error("Unexpected state in RosActionNode::tick()");
     }
+  }
+  void doneCallBack(const actionlib::SimpleClientGoalState& state, const ResultTypeConstPtr& result)
+  {
+    onDone(*result);
+  }
+  void activeCallBack(void)
+  {
+    onActive();
+  }
+  void feedbackCallBack(const FeedbackTypeConstPtr& feedback)
+  {
+    onFeedback(*feedback);
   }
 };
 
