@@ -33,8 +33,7 @@ void TopicPublisherLogger::callback(BT::Duration timestamp, const BT::TreeNode& 
     realtime_pub->msg_.status = convertBtStatusToRosStatus(status);
     realtime_pub->msg_.progress = node.progress();
 
-    //
-    realtime_pub->msg_.duration.fromSec(std::chrono::duration_cast<std::chrono::duration<double>>(timestamp).count());
+    // realtime_pub->msg_.duration.fromSec(std::chrono::duration_cast<std::chrono::duration<double>>(timestamp).count());
     realtime_pub->unlockAndPublish();
   }
 }
